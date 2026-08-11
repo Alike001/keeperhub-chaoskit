@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { isCanaryEligible, stageStatus, type RunState } from "@/domain/runbook";
 import styles from "./runbook-lab.module.css";
@@ -27,15 +27,53 @@ function now() {
 export function RunbookLab() {
   const [state, setState] = useState<RunState>(initialState);
   const [evidence, setEvidence] = useState<Evidence[]>([]);
+  const [error, setError] = useState<string>();
+  const [runId, setRunId] = useState<string>();
   const diagnosed = stageStatus("diagnose", state) === "verified";
   const simulated = stageStatus("dry-run", state) === "verified";
   const deduped = stageStatus("duplicate-guard", state) === "verified";
   const canaryReady = isCanaryEligible(state);
-  const runId = useMemo(() => crypto.randomUUID().slice(0, 8), []);
   const record = (stage: string, detail: string) =>
     setEvidence((old) => [{ at: now(), stage, detail }, ...old]);
 
-  function diagnose() {
+  async function ensureRunId() {
+    if (runId) return runId;
+    const response = await fetch("/api/lab/runs", { method: "POST" });
+    const payload = (await response.json()) as {
+      run?: { id: string };
+      error?: string;
+    };
+    if (!response.ok || !payload.run) throw new Error(payload.error);
+    setRunId(payload.run.id);
+    return payload.run.id;
+  }
+
+  async function recordStage(
+    stage: "diagnose" | "dry-run" | "duplicate-guard",
+  ) {
+    try {
+      setError(undefined);
+      const id = await ensureRunId();
+      const response = await fetch(`/api/lab/runs/${id}/evidence`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stage }),
+      });
+      const payload = (await response.json()) as {
+        error?: string;
+        durableRequestCount?: number;
+      };
+      if (!response.ok) throw new Error(payload.error);
+      return payload;
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Evidence failed.");
+      return undefined;
+    }
+  }
+
+  async function diagnose() {
+    const persisted = await recordStage("diagnose");
+    if (!persisted) return;
     setState((old) => ({
       ...old,
       keeperHubConnected: true,
@@ -44,23 +82,30 @@ export function RunbookLab() {
     }));
     record(
       "Diagnose",
-      "Read-only KeeperHub environment confirmed on Ethereum Sepolia (11155111).",
+      "Controlled diagnosis saved for Ethereum Sepolia (11155111). No KeeperHub call was made.",
     );
   }
-  function simulate() {
+  async function simulate() {
     if (!diagnosed) return;
+    const persisted = await recordStage("dry-run");
+    if (!persisted) return;
     setState((old) => ({ ...old, simulationSucceeded: true }));
     record(
       "Safe dry-run",
-      "Controlled simulation passed at 48,504 gas. No transaction was sent.",
+      "Controlled dry-run evidence saved. No KeeperHub call or transaction was made.",
     );
   }
-  function duplicateGuard() {
+  async function duplicateGuard() {
     if (!simulated) return;
-    setState((old) => ({ ...old, durableRequestCount: 1 }));
+    const persisted = await recordStage("duplicate-guard");
+    if (!persisted) return;
+    setState((old) => ({
+      ...old,
+      durableRequestCount: persisted.durableRequestCount ?? 0,
+    }));
     record(
       "Duplicate guard",
-      "Repeated request joined run key. Durable outcome count: 1.",
+      "Two controlled requests produced one durable database outcome.",
     );
   }
 
@@ -68,7 +113,9 @@ export function RunbookLab() {
     <div className={styles.shell}>
       <header className={styles.top}>
         <Link href="/">ChaosKit</Link>
-        <span className="mono">run_{runId}</span>
+        <span className="mono">
+          {runId ? `run_${runId.slice(0, 8)}` : "run_pending"}
+        </span>
         <span className={styles.readOnly}>Controlled test</span>
       </header>
       <main className={styles.layout}>
@@ -84,8 +131,8 @@ export function RunbookLab() {
             status={diagnosed ? "verified" : "ready"}
             detail={
               diagnosed
-                ? "Read-only KeeperHub connection, wallet, and Ethereum Sepolia (11155111) confirmed."
-                : "Read the environment. This cannot send a transaction."
+                ? "Controlled diagnosis saved for Ethereum Sepolia. A real KeeperHub doctor remains pending."
+                : "Record a controlled prerequisite check. This cannot send a transaction."
             }
             action="Run connection doctor"
             onClick={diagnose}
@@ -96,8 +143,8 @@ export function RunbookLab() {
             status={simulated ? "verified" : diagnosed ? "ready" : "locked"}
             detail={
               simulated
-                ? "48,504 gas simulated. No transaction was sent."
-                : "Simulate the exact prepared call after environment confirmation."
+                ? "Controlled dry-run evidence saved. A real KeeperHub simulation remains pending."
+                : "Record a controlled dry-run after the prerequisite check."
             }
             action="Simulate prepared call"
             onClick={simulate}
@@ -129,6 +176,7 @@ export function RunbookLab() {
             disabled={!canaryReady}
           />
         </section>
+        {error ? <p role="alert">{error}</p> : null}
         <aside className={styles.evidence} aria-live="polite">
           <h2>Evidence</h2>
           <p className="mono">No onchain action has been requested.</p>
