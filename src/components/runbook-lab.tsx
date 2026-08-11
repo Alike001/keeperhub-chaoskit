@@ -32,6 +32,9 @@ export function RunbookLab() {
   const [fillPilotReadiness, setFillPilotReadiness] = useState<string>(
     "Checking FillPilot read-only readiness…",
   );
+  const [fillPilotBoundary, setFillPilotBoundary] = useState<string>(
+    "Checking the FillPilot canary boundary…",
+  );
   const diagnosed = stageStatus("diagnose", state) === "verified";
   const simulated = stageStatus("dry-run", state) === "verified";
   const deduped = stageStatus("duplicate-guard", state) === "verified";
@@ -45,16 +48,31 @@ export function RunbookLab() {
         const payload = (await response.json()) as {
           status?: string;
           reason?: string;
+          readiness?: { status?: string; reason?: string };
+          canary?: {
+            status?: string;
+            boundary?: string;
+            writesEnabled?: boolean;
+          };
         };
+        const readiness = payload.readiness ?? payload;
         setFillPilotReadiness(
           response.ok
-            ? `FillPilot: ${payload.status ?? "unknown"}. ${payload.reason ?? "Writes remain disabled."}`
+            ? `FillPilot: ${readiness.status ?? "unknown"}. ${readiness.reason ?? "Writes remain disabled."}`
             : `FillPilot unavailable: ${payload.reason ?? "readiness check failed."}`,
         );
+        setFillPilotBoundary(
+          response.ok && payload.canary
+            ? `Canary: ${payload.canary.status ?? "unknown"}. ${payload.canary.boundary ?? "No boundary detail returned."}`
+            : "Canary boundary unavailable. No testnet write can be requested.",
+        );
       })
-      .catch(() =>
-        setFillPilotReadiness("FillPilot unavailable: readiness check failed."),
-      );
+      .catch(() => {
+        setFillPilotReadiness("FillPilot unavailable: readiness check failed.");
+        setFillPilotBoundary(
+          "Canary boundary unavailable. No testnet write can be requested.",
+        );
+      });
   }, []);
 
   async function ensureRunId() {
@@ -147,6 +165,7 @@ export function RunbookLab() {
             remains locked until each prerequisite is proven.
           </p>
           <p className="mono">{fillPilotReadiness}</p>
+          <p className="mono">{fillPilotBoundary}</p>
           <Stage
             number="01"
             name="Diagnose"
@@ -191,8 +210,8 @@ export function RunbookLab() {
             status={canaryReady ? "ready" : "locked"}
             detail={
               canaryReady
-                ? "Ethereum Sepolia. Exact contract and value must be reviewed before an explicit testnet write."
-                : "Complete the controlled evidence stages before a canary is available."
+                ? "The controlled runbook is complete. FillPilot still reports that its canary contract is not deployed, so no testnet write can be prepared."
+                : "Complete the controlled evidence stages. A deployed and separately reviewed FillPilot canary remains required."
             }
             action="Review Ethereum Sepolia canary"
             disabled={!canaryReady}

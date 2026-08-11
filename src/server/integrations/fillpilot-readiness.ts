@@ -6,6 +6,17 @@ export type FillPilotReadiness = Readonly<{
   writesEnabled: false;
 }>;
 
+export type FillPilotCanaryBoundary = Readonly<{
+  status: "deployment-required";
+  writesEnabled: false;
+  boundary: string;
+}>;
+
+export type FillPilotExecutionBoundary = Readonly<{
+  readiness: FillPilotReadiness;
+  canary: FillPilotCanaryBoundary;
+}>;
+
 export async function readFillPilotReadiness(
   fetcher: typeof fetch = fetch,
   baseUrl = process.env.FILLPILOT_URL ?? "http://127.0.0.1:3000",
@@ -28,4 +39,38 @@ export async function readFillPilotReadiness(
     );
   }
   return payload as FillPilotReadiness;
+}
+
+/**
+ * Reads FillPilot's two non-submitting testnet facts as one bounded result.
+ * It deliberately accepts only the locked canary state. A future deploy or
+ * write-enabled response must add a separately reviewed adapter and test.
+ */
+export async function readFillPilotExecutionBoundary(
+  fetcher: typeof fetch = fetch,
+  baseUrl = process.env.FILLPILOT_URL ?? "http://127.0.0.1:3000",
+): Promise<FillPilotExecutionBoundary> {
+  const [readiness, canaryResponse] = await Promise.all([
+    readFillPilotReadiness(fetcher, baseUrl),
+    fetcher(`${baseUrl}/api/testnet/canary`, {
+      cache: "no-store",
+      headers: { Accept: "application/json" },
+    }),
+  ]);
+  if (!canaryResponse.ok)
+    throw new Error(
+      `FillPilot canary boundary returned HTTP ${canaryResponse.status}`,
+    );
+
+  const canaryPayload =
+    (await canaryResponse.json()) as Partial<FillPilotCanaryBoundary>;
+  if (
+    canaryPayload.status !== "deployment-required" ||
+    canaryPayload.writesEnabled !== false ||
+    typeof canaryPayload.boundary !== "string"
+  ) {
+    throw new Error("FillPilot returned an invalid locked canary boundary");
+  }
+
+  return { readiness, canary: canaryPayload as FillPilotCanaryBoundary };
 }

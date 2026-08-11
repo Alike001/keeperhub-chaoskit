@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
 
-import { readFillPilotReadiness } from "@/server/integrations/fillpilot-readiness";
+import { readFillPilotExecutionBoundary } from "@/server/integrations/fillpilot-readiness";
 
 export const runtime = "nodejs";
 
-/** Reads FillPilot's own readiness endpoint. It cannot call KeeperHub or submit. */
+/** Reads FillPilot's own locked testnet facts. It cannot call KeeperHub or submit. */
 export async function GET() {
   try {
     return NextResponse.json({
       source: "fillpilot",
-      ...(await readFillPilotReadiness()),
+      ...(await readFillPilotExecutionBoundary()),
     });
   } catch (error) {
     return NextResponse.json(
