@@ -1,0 +1,14 @@
+.hero { background: var(--paper); display: grid; gap: 70px; grid-template-columns: minmax(0, .95fr) minmax(420px, 1.05fr); margin: 0 auto; max-width: var(--max); padding: 92px 30px 82px; }
+.heroCopy h1 { font-size: clamp(48px, 6vw, 76px); letter-spacing: -4px; line-height: .98; margin: 0; max-width: 650px; }
+.heroCopy > p { color: #33435c; font-size: 21px; line-height: 1.5; margin: 32px 0; max-width: 570px; }
+.heroCopy ul { display: grid; gap: 16px; list-style: none; margin: 35px 0 42px; padding: 0; font-size: 14px; }
+.heroCopy li::before { content: "↳"; color: var(--blue); margin-right: 14px; }
+.primary { background: var(--ink); color: #fff; display: inline-flex; font-family: "SFMono-Regular", Consolas, monospace; gap: 28px; padding: 17px 20px; }
+.primary span { font-size: 20px; line-height: 14px; }
+.rail { border-left: 2px solid var(--blue); display: grid; gap: 11px; list-style: none; margin: 0; padding: 0 0 0 32px; }
+.stage { background: #fff; border: 1px solid var(--line); display: grid; gap: 21px; grid-template-columns: 54px 1fr; min-height: 128px; padding: 22px; position: relative; }
+.stage > span { align-items: center; border: 2px solid var(--blue); border-radius: 50%; color: var(--blue); display: flex; font-family: "SFMono-Regular", Consolas, monospace; font-size: 14px; height: 37px; justify-content: center; width: 37px; }
+.stage > .blocked { border-color: var(--amber); color: var(--amber); }.stage > .ready { border-color: var(--green); color: var(--green); }.stage h2 { font-size: 21px; margin: 0 0 8px; }.stage p { color: var(--muted); line-height: 1.45; margin: 0; }
+.evidence { border-top: 1px solid var(--line); display: grid; gap: 60px; grid-template-columns: .75fr 1.25fr; margin: 0 auto; max-width: var(--max); padding: 74px 30px; }.evidence h2,.docs h2 { font-size: 36px; letter-spacing: -1.7px; line-height: 1.08; margin: 0 0 18px; }.evidence p { color: var(--muted); line-height: 1.55; }
+.table { border-top: 2px solid var(--ink); font-family: "SFMono-Regular", Consolas, monospace; font-size: 12px; }.table div { border-bottom: 1px solid var(--line); display: grid; gap: 12px; grid-template-columns: .75fr 1.25fr 1fr; padding: 16px 0; }.table div:first-child { color: var(--muted); font-size: 11px; text-transform: uppercase; }.docs { background: var(--ink); color: #fff; padding: 78px max(30px, calc((100vw - var(--max)) / 2)); }.docs p { color: #8cafee; font-size: 12px; }.docs h2 { max-width: 690px; }
+@media (max-width: 840px) { .hero,.evidence { grid-template-columns: 1fr; gap: 45px; }.hero { padding-top: 56px; }.rail { margin-left: 12px; }.heroCopy h1 { letter-spacing: -2.5px; }.table { overflow-x: auto; }.table div { min-width: 550px; } }
