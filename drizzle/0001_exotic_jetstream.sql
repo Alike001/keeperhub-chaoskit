@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "run_evidence_run_idempotency_idx" ON "run_evidence" USING btree ("run_id","idempotency_key");
