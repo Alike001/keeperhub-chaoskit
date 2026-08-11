@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { isCanaryEligible, stageStatus, type RunState } from "@/domain/runbook";
 import styles from "./runbook-lab.module.css";
@@ -29,12 +29,33 @@ export function RunbookLab() {
   const [evidence, setEvidence] = useState<Evidence[]>([]);
   const [error, setError] = useState<string>();
   const [runId, setRunId] = useState<string>();
+  const [fillPilotReadiness, setFillPilotReadiness] = useState<string>(
+    "Checking FillPilot read-only readiness…",
+  );
   const diagnosed = stageStatus("diagnose", state) === "verified";
   const simulated = stageStatus("dry-run", state) === "verified";
   const deduped = stageStatus("duplicate-guard", state) === "verified";
   const canaryReady = isCanaryEligible(state);
   const record = (stage: string, detail: string) =>
     setEvidence((old) => [{ at: now(), stage, detail }, ...old]);
+
+  useEffect(() => {
+    void fetch("/api/fillpilot/readiness")
+      .then(async (response) => {
+        const payload = (await response.json()) as {
+          status?: string;
+          reason?: string;
+        };
+        setFillPilotReadiness(
+          response.ok
+            ? `FillPilot: ${payload.status ?? "unknown"}. ${payload.reason ?? "Writes remain disabled."}`
+            : `FillPilot unavailable: ${payload.reason ?? "readiness check failed."}`,
+        );
+      })
+      .catch(() =>
+        setFillPilotReadiness("FillPilot unavailable: readiness check failed."),
+      );
+  }, []);
 
   async function ensureRunId() {
     if (runId) return runId;
@@ -125,6 +146,7 @@ export function RunbookLab() {
             This runbook only performs controlled checks. A real testnet canary
             remains locked until each prerequisite is proven.
           </p>
+          <p className="mono">{fillPilotReadiness}</p>
           <Stage
             number="01"
             name="Diagnose"
