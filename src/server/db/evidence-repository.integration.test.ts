@@ -13,6 +13,7 @@ vi.mock("server-only", () => ({}));
 
 import {
   createLabRun,
+  listRecentLabRuns,
   listRunEvidence,
   recordDurableEvidence,
 } from "./evidence-repository";
@@ -65,5 +66,24 @@ describeWithDatabase("durable lab evidence", () => {
       stage: "duplicate-guard",
       outcome: "verified",
     });
+  });
+
+  it("lists newest durable runs first within the requested limit", async () => {
+    const older = await createLabRun({
+      target: "older-run",
+      expectedChainId: 11155111,
+      databaseUrl,
+    });
+    const newer = await createLabRun({
+      target: "newer-run",
+      expectedChainId: 11155111,
+      databaseUrl,
+    });
+    runIds.push(older.id, newer.id);
+
+    const history = await listRecentLabRuns({ databaseUrl, limit: 1 });
+
+    expect(history).toHaveLength(1);
+    expect(history[0]).toMatchObject({ id: newer.id, target: "newer-run" });
   });
 });

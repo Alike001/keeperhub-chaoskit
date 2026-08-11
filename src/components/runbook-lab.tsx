@@ -15,13 +15,14 @@ const initialState: RunState = {
 };
 
 type Evidence = { at: string; stage: string; detail: string };
+type RecentRun = { id: string; target: string; expectedChainId: number };
 
-function now() {
+function now(value = new Date()) {
   return new Intl.DateTimeFormat("en-GB", {
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
-  }).format(new Date());
+  }).format(value);
 }
 
 export function RunbookLab() {
@@ -29,6 +30,8 @@ export function RunbookLab() {
   const [evidence, setEvidence] = useState<Evidence[]>([]);
   const [error, setError] = useState<string>();
   const [runId, setRunId] = useState<string>();
+  const [recentRuns, setRecentRuns] = useState<RecentRun[]>([]);
+  const [historyLabel, setHistoryLabel] = useState("No durable run selected.");
   const [fillPilotReadiness, setFillPilotReadiness] = useState<string>(
     "Checking FillPilot read-only readiness…",
   );
@@ -75,15 +78,61 @@ export function RunbookLab() {
       });
   }, []);
 
+  useEffect(() => {
+    void fetch("/api/lab/runs")
+      .then(async (response) => {
+        const payload = (await response.json()) as { runs?: RecentRun[] };
+        setRecentRuns(
+          response.ok && Array.isArray(payload.runs) ? payload.runs : [],
+        );
+      })
+      .catch(() => setRecentRuns([]));
+  }, []);
+
+  async function showDurableEvidence(id: string) {
+    try {
+      setError(undefined);
+      const response = await fetch(`/api/lab/runs/${id}/evidence`);
+      const payload = (await response.json()) as {
+        evidence?: Array<{ createdAt: string; stage: string; outcome: string }>;
+        error?: string;
+      };
+      if (!response.ok || !payload.evidence) throw new Error(payload.error);
+      setEvidence(
+        payload.evidence.map((item) => ({
+          at: now(new Date(item.createdAt)),
+          stage: item.stage,
+          detail: `${item.outcome}. Durable controlled evidence.`,
+        })),
+      );
+      setHistoryLabel(`Viewing durable evidence for run_${id.slice(0, 8)}.`);
+    } catch (cause) {
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : "Could not load durable evidence.",
+      );
+    }
+  }
+
   async function ensureRunId() {
     if (runId) return runId;
     const response = await fetch("/api/lab/runs", { method: "POST" });
     const payload = (await response.json()) as {
-      run?: { id: string };
+      run?: RecentRun;
       error?: string;
     };
     if (!response.ok || !payload.run) throw new Error(payload.error);
     setRunId(payload.run.id);
+    setRecentRuns((old) =>
+      [payload.run!, ...old.filter((run) => run.id !== payload.run!.id)].slice(
+        0,
+        8,
+      ),
+    );
+    setHistoryLabel(
+      `Viewing durable evidence for run_${payload.run.id.slice(0, 8)}.`,
+    );
     return payload.run.id;
   }
 
@@ -223,7 +272,7 @@ export function RunbookLab() {
           <p className="mono">No onchain action has been requested.</p>
           {evidence.length === 0 ? (
             <p className={styles.empty}>
-              Run a stage to create factual evidence.
+              Run a stage to create durable controlled evidence.
             </p>
           ) : (
             <ol>
@@ -232,6 +281,28 @@ export function RunbookLab() {
                   <time>{item.at}</time>
                   <strong>{item.stage}</strong>
                   <span>{item.detail}</span>
+                </li>
+              ))}
+            </ol>
+          )}
+          <h3 className={styles.historyTitle}>Recent controlled runs</h3>
+          <p className={styles.historyLabel}>{historyLabel}</p>
+          {recentRuns.length === 0 ? (
+            <p className={styles.empty}>
+              No durable runs are available in this environment.
+            </p>
+          ) : (
+            <ol className={styles.history}>
+              {recentRuns.map((run) => (
+                <li key={run.id}>
+                  <span className="mono">run_{run.id.slice(0, 8)}</span>
+                  <span>Ethereum Sepolia ({run.expectedChainId})</span>
+                  <button
+                    type="button"
+                    onClick={() => void showDurableEvidence(run.id)}
+                  >
+                    View evidence
+                  </button>
                 </li>
               ))}
             </ol>

@@ -12,6 +12,27 @@ const payloadSchema = z.object({
 
 export const runtime = "nodejs";
 
+/** Reads evidence for one controlled run. It cannot call KeeperHub or a chain. */
+export async function GET(
+  _request: NextRequest,
+  context: RouteContext<"/api/lab/runs/[id]/evidence">,
+) {
+  try {
+    const { id: runId } = await context.params;
+    return NextResponse.json({ evidence: await listRunEvidence({ runId }) });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Could not read run evidence.",
+      },
+      { status: 503 },
+    );
+  }
+}
+
 /** Records controlled-test evidence only. It has no KeeperHub or chain adapter. */
 export async function POST(
   request: NextRequest,

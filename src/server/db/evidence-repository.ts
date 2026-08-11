@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 
 import { createDatabase } from "./client";
 import { labRuns, runEvidence } from "./schema";
@@ -92,6 +92,26 @@ export async function listRunEvidence(input: {
       .from(runEvidence)
       .where(eq(runEvidence.runId, input.runId))
       .orderBy(asc(runEvidence.createdAt));
+  } finally {
+    await client.end();
+  }
+}
+
+/** Recent controlled runs are evidence metadata, never execution authority. */
+export async function listRecentLabRuns(
+  input: { databaseUrl?: string; limit?: number } = {},
+) {
+  const limit = input.limit ?? 8;
+  if (!Number.isSafeInteger(limit) || limit < 1 || limit > 25) {
+    throw new Error("Lab run history limit must be between 1 and 25");
+  }
+  const { client, db } = createDatabase(input.databaseUrl);
+  try {
+    return await db
+      .select()
+      .from(labRuns)
+      .orderBy(desc(labRuns.createdAt))
+      .limit(limit);
   } finally {
     await client.end();
   }
