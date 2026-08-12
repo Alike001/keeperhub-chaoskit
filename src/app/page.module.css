@@ -139,8 +139,26 @@
   color: #8cafee;
   font-size: 12px;
 }
+.docs > p:not(.mono) {
+  font-family: Inter, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.55;
+  max-width: 620px;
+}
 .docs h2 {
   max-width: 690px;
+}
+.docs a {
+  border-bottom: 1px solid #8cafee;
+  color: #fff;
+  display: inline-block;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 13px;
+  margin-top: 16px;
+  padding-bottom: 5px;
+}
+.docs a:hover {
+  color: #8cafee;
 }
 @media (max-width: 840px) {
   .hero,

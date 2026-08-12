@@ -2,6 +2,8 @@
 
 ChaosKit is a controlled onboarding lab for KeeperHub builders. It helps a new builder prove the execution path before their workflow is allowed to expose value.
 
+Read the [first-execution onboarding teardown](docs/first-execution-teardown.md) for the exact tested path, observed outcomes, and proposed improvements that shaped the lab.
+
 The problem is practical: a first KeeperHub workflow can fail for several reasons, such as missing wallet setup, wrong network, failed simulation, or duplicate triggers. A builder needs evidence that explains which boundary failed without mistaking a controlled test for a transfer.
 
 ## What it does
