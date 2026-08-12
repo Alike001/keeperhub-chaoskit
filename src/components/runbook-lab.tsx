@@ -32,15 +32,10 @@ export function RunbookLab() {
   const [runId, setRunId] = useState<string>();
   const [recentRuns, setRecentRuns] = useState<RecentRun[]>([]);
   const [historyLabel, setHistoryLabel] = useState("No durable run selected.");
-  const [fillPilotReadiness, setFillPilotReadiness] = useState<string>(
-    "Checking FillPilot read-only readiness…",
+  const [fillPilotProof, setFillPilotProof] = useState<string>(
+    "Checking FillPilot's completed public proof…",
   );
-  const [fillPilotBoundary, setFillPilotBoundary] = useState<string>(
-    "Checking the FillPilot canary boundary…",
-  );
-  const [canaryStatus, setCanaryStatus] = useState<string>(
-    "unavailable-external-canary",
-  );
+  const [proofVerified, setProofVerified] = useState(false);
   const diagnosed = stageStatus("diagnose", state) === "verified";
   const simulated = stageStatus("dry-run", state) === "verified";
   const deduped = stageStatus("duplicate-guard", state) === "verified";
@@ -54,34 +49,31 @@ export function RunbookLab() {
         const payload = (await response.json()) as {
           status?: string;
           reason?: string;
-          readiness?: { status?: string; reason?: string };
-          canary?: {
-            status?: string;
+          proof?: {
+            network?: string;
+            chainId?: number;
+            executionId?: string;
+            receiptStatus?: string;
             boundary?: string;
-            writesEnabled?: boolean;
           };
         };
-        const readiness = payload.readiness ?? payload;
-        setFillPilotReadiness(
-          response.ok
-            ? `FillPilot: ${readiness.status ?? "unknown"}. ${readiness.reason ?? "Writes remain disabled."}`
-            : `FillPilot unavailable: ${payload.reason ?? "readiness check failed."}`,
-        );
-        setFillPilotBoundary(
-          response.ok && payload.canary
-            ? `Canary: ${payload.canary.status ?? "unknown"}. ${payload.canary.boundary ?? "No boundary detail returned."}`
-            : "Canary boundary unavailable. No testnet write can be requested.",
-        );
-        setCanaryStatus(
-          payload.canary?.status ?? "unavailable-external-canary",
+        const proof = payload.proof;
+        const verified =
+          response.ok &&
+          proof?.network === "Base Sepolia" &&
+          proof.chainId === 84532 &&
+          proof.receiptStatus === "Succeeded" &&
+          typeof proof.executionId === "string";
+        setProofVerified(verified);
+        setFillPilotProof(
+          verified
+            ? `FillPilot proof verified: ${proof.executionId}, completed on Base Sepolia (84532). ${proof.boundary ?? ""}`
+            : `FillPilot proof unavailable: ${payload.reason ?? "proof check failed."}`,
         );
       })
       .catch(() => {
-        setFillPilotReadiness("FillPilot unavailable: readiness check failed.");
-        setFillPilotBoundary(
-          "Canary boundary unavailable. No testnet write can be requested.",
-        );
-        setCanaryStatus("unavailable-external-canary");
+        setFillPilotProof("FillPilot proof unavailable: proof check failed.");
+        setProofVerified(false);
       });
   }, []);
 
@@ -220,8 +212,7 @@ export function RunbookLab() {
             This runbook only performs controlled checks. A real testnet canary
             remains locked until each prerequisite is proven.
           </p>
-          <p className="mono">{fillPilotReadiness}</p>
-          <p className="mono">{fillPilotBoundary}</p>
+          <p className="mono">{fillPilotProof}</p>
           <Stage
             number="01"
             name="Diagnose"
@@ -265,15 +256,13 @@ export function RunbookLab() {
             name="Canary boundary"
             status="locked"
             detail={
-              canaryStatus === "deployment-required"
-                ? "FillPilot's canary contract is not deployed. The runbook cannot prepare or request a testnet write."
-                : canaryStatus === "verified-external-canary" && canaryReady
-                  ? "A public Base Sepolia canary has verified code. The controlled runbook is complete, but only FillPilot can prepare its separately approved zero-value execution review."
-                  : canaryStatus === "verified-external-canary"
-                    ? "A public Base Sepolia canary has verified code. Complete the controlled evidence stages before opening FillPilot's separate execution review."
-                    : "The public canary could not be verified. No testnet write can be requested."
+              proofVerified && canaryReady
+                ? "FillPilot's public Base Sepolia proof is complete. ChaosKit verified the record without gaining any authority to submit another call."
+                : proofVerified
+                  ? "FillPilot's public Base Sepolia proof is complete. Finish the controlled evidence stages to compare the documented test path with a real receipt."
+                  : "FillPilot's public proof could not be verified. ChaosKit cannot request a testnet write."
             }
-            action="Separate FillPilot approval required"
+            action="Proof read only, no write authority"
             disabled
           />
         </section>
