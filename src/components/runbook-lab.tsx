@@ -17,6 +17,10 @@ const initialState: RunState = {
 type Evidence = { at: string; stage: string; detail: string };
 type RecentRun = { id: string; target: string; expectedChainId: number };
 
+function chainLabel(chainId: number) {
+  return chainId === 84532 ? "Base Sepolia" : `Chain ${chainId}`;
+}
+
 function now(value = new Date()) {
   return new Intl.DateTimeFormat("en-GB", {
     hour: "2-digit",
@@ -296,7 +300,9 @@ export function RunbookLab() {
               {recentRuns.map((run) => (
                 <li key={run.id}>
                   <span className="mono">run_{run.id.slice(0, 8)}</span>
-                  <span>Base Sepolia ({run.expectedChainId})</span>
+                  <span>
+                    {chainLabel(run.expectedChainId)} ({run.expectedChainId})
+                  </span>
                   <button
                     type="button"
                     onClick={() => void showDurableEvidence(run.id)}
