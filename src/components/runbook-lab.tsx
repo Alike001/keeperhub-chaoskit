@@ -38,13 +38,13 @@ export function RunbookLab() {
   const [fillPilotBoundary, setFillPilotBoundary] = useState<string>(
     "Checking the FillPilot canary boundary…",
   );
-  const [canaryDeploymentRequired, setCanaryDeploymentRequired] =
-    useState(true);
+  const [canaryStatus, setCanaryStatus] = useState<string>(
+    "unavailable-external-canary",
+  );
   const diagnosed = stageStatus("diagnose", state) === "verified";
   const simulated = stageStatus("dry-run", state) === "verified";
   const deduped = stageStatus("duplicate-guard", state) === "verified";
   const canaryReady = isCanaryEligible(state);
-  const canaryActionable = canaryReady && !canaryDeploymentRequired;
   const record = (stage: string, detail: string) =>
     setEvidence((old) => [{ at: now(), stage, detail }, ...old]);
 
@@ -72,8 +72,8 @@ export function RunbookLab() {
             ? `Canary: ${payload.canary.status ?? "unknown"}. ${payload.canary.boundary ?? "No boundary detail returned."}`
             : "Canary boundary unavailable. No testnet write can be requested.",
         );
-        setCanaryDeploymentRequired(
-          payload.canary?.status === "deployment-required",
+        setCanaryStatus(
+          payload.canary?.status ?? "unavailable-external-canary",
         );
       })
       .catch(() => {
@@ -81,7 +81,7 @@ export function RunbookLab() {
         setFillPilotBoundary(
           "Canary boundary unavailable. No testnet write can be requested.",
         );
-        setCanaryDeploymentRequired(true);
+        setCanaryStatus("unavailable-external-canary");
       });
   }, []);
 
@@ -263,20 +263,18 @@ export function RunbookLab() {
           <Stage
             number="04"
             name="Canary boundary"
-            status={canaryActionable ? "ready" : "locked"}
+            status="locked"
             detail={
-              canaryDeploymentRequired
+              canaryStatus === "deployment-required"
                 ? "FillPilot's canary contract is not deployed. The runbook cannot prepare or request a testnet write."
-                : canaryReady
-                  ? "The controlled runbook is complete. Exact contract and value still require separate operator review."
-                  : "Complete the controlled evidence stages. A deployed and separately reviewed FillPilot canary remains required."
+                : canaryStatus === "verified-external-canary" && canaryReady
+                  ? "A public Base Sepolia canary has verified code. The controlled runbook is complete, but only FillPilot can prepare its separately approved zero-value execution review."
+                  : canaryStatus === "verified-external-canary"
+                    ? "A public Base Sepolia canary has verified code. Complete the controlled evidence stages before opening FillPilot's separate execution review."
+                    : "The public canary could not be verified. No testnet write can be requested."
             }
-            action={
-              canaryDeploymentRequired
-                ? "Canary deployment required"
-                : "Review Ethereum Sepolia canary"
-            }
-            disabled={!canaryActionable}
+            action="Separate FillPilot approval required"
+            disabled
           />
         </section>
         {error ? <p role="alert">{error}</p> : null}

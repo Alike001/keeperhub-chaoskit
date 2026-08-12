@@ -23,7 +23,7 @@ describe("FillPilot read-only readiness adapter", () => {
     expect(readiness.writesEnabled).toBe(false);
   });
 
-  it("surfaces the explicit locked canary boundary without enabling writes", async () => {
+  it("surfaces a verified external canary without enabling writes", async () => {
     const boundary = await readFillPilotExecutionBoundary(async (input) => {
       const url = String(input);
       if (url.endsWith("/api/testnet/readiness")) {
@@ -38,15 +38,15 @@ describe("FillPilot read-only readiness adapter", () => {
       }
       return new Response(
         JSON.stringify({
-          status: "deployment-required",
+          status: "verified-external-canary",
           writesEnabled: false,
-          boundary: "Canary deployment remains separately reviewed.",
+          boundary: "External canary remains separately reviewed.",
         }),
       );
     }, "http://fillpilot.test");
 
     expect(boundary.readiness.status).toBe("configured");
-    expect(boundary.canary.status).toBe("deployment-required");
+    expect(boundary.canary.status).toBe("verified-external-canary");
     expect(boundary.canary.writesEnabled).toBe(false);
   });
 

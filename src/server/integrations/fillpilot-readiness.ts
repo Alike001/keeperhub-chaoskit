@@ -7,7 +7,10 @@ export type FillPilotReadiness = Readonly<{
 }>;
 
 export type FillPilotCanaryBoundary = Readonly<{
-  status: "deployment-required";
+  status:
+    | "deployment-required"
+    | "verified-external-canary"
+    | "unavailable-external-canary";
   writesEnabled: false;
   boundary: string;
 }>;
@@ -43,8 +46,8 @@ export async function readFillPilotReadiness(
 
 /**
  * Reads FillPilot's two non-submitting testnet facts as one bounded result.
- * It deliberately accepts only the locked canary state. A future deploy or
- * write-enabled response must add a separately reviewed adapter and test.
+ * It accepts only read-only canary facts. A verified external canary still
+ * never enables a write from ChaosKit.
  */
 export async function readFillPilotExecutionBoundary(
   fetcher: typeof fetch = fetch,
@@ -65,7 +68,9 @@ export async function readFillPilotExecutionBoundary(
   const canaryPayload =
     (await canaryResponse.json()) as Partial<FillPilotCanaryBoundary>;
   if (
-    canaryPayload.status !== "deployment-required" ||
+    (canaryPayload.status !== "deployment-required" &&
+      canaryPayload.status !== "verified-external-canary" &&
+      canaryPayload.status !== "unavailable-external-canary") ||
     canaryPayload.writesEnabled !== false ||
     typeof canaryPayload.boundary !== "string"
   ) {
