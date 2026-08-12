@@ -41,7 +41,7 @@ describeWithDatabase("durable lab evidence", () => {
   it("stores one evidence row when a stage is recorded twice", async () => {
     const run = await createLabRun({
       target: "fillpilot-testnet-canary",
-      expectedChainId: 11155111,
+      expectedChainId: 84532,
       databaseUrl,
     });
     runIds.push(run.id);
@@ -71,12 +71,12 @@ describeWithDatabase("durable lab evidence", () => {
   it("lists newest durable runs first within the requested limit", async () => {
     const older = await createLabRun({
       target: "older-run",
-      expectedChainId: 11155111,
+      expectedChainId: 84532,
       databaseUrl,
     });
     const newer = await createLabRun({
       target: "newer-run",
-      expectedChainId: 11155111,
+      expectedChainId: 84532,
       databaseUrl,
     });
     runIds.push(older.id, newer.id);

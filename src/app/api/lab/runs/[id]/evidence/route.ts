@@ -5,6 +5,7 @@ import {
   listRunEvidence,
   recordDurableEvidence,
 } from "@/server/db/evidence-repository";
+import { allowAnonymousWrite } from "@/server/security/rate-limit";
 
 const payloadSchema = z.object({
   stage: z.enum(["diagnose", "dry-run", "duplicate-guard"]),
@@ -19,6 +20,9 @@ export async function GET(
 ) {
   try {
     const { id: runId } = await context.params;
+    if (!z.string().uuid().safeParse(runId).success) {
+      return blocked("Invalid controlled run identifier.");
+    }
     return NextResponse.json({ evidence: await listRunEvidence({ runId }) });
   } catch (error) {
     return NextResponse.json(
@@ -38,8 +42,21 @@ export async function POST(
   request: NextRequest,
   context: RouteContext<"/api/lab/runs/[id]/evidence">,
 ) {
+  const limit = allowAnonymousWrite("lab-evidence");
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "Too many evidence writes. Try again later." },
+      {
+        status: 429,
+        headers: { "Retry-After": String(limit.retryAfterSeconds) },
+      },
+    );
+  }
   try {
     const { id: runId } = await context.params;
+    if (!z.string().uuid().safeParse(runId).success) {
+      return blocked("Invalid controlled run identifier.");
+    }
     const { stage } = payloadSchema.parse(await request.json());
     const history = await listRunEvidence({ runId });
     if (stage === "dry-run" && !hasStage(history, "diagnose")) {
@@ -92,7 +109,7 @@ function blocked(error: string) {
 
 function controlledFacts(stage: "diagnose" | "dry-run" | "duplicate-guard") {
   if (stage === "diagnose") {
-    return { mode: "controlled", expectedChainId: 11155111 };
+    return { mode: "controlled", expectedChainId: 84532 };
   }
   if (stage === "dry-run") {
     return { mode: "controlled", transactionCreated: false };

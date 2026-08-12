@@ -12,8 +12,12 @@ const safeState: RunState = {
 
 describe("ChaosKit runbook gates", () => {
   it("does not unlock a canary before each controlled check succeeds", () => {
-    expect(isCanaryEligible({ ...safeState, simulationSucceeded: false })).toBe(false);
-    expect(isCanaryEligible({ ...safeState, durableRequestCount: 2 })).toBe(false);
+    expect(isCanaryEligible({ ...safeState, simulationSucceeded: false })).toBe(
+      false,
+    );
+    expect(isCanaryEligible({ ...safeState, durableRequestCount: 2 })).toBe(
+      false,
+    );
     expect(isCanaryEligible({ ...safeState, observedChain: 8453 })).toBe(false);
   });
 

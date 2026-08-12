@@ -1,4 +1,9 @@
-export const stages = ["diagnose", "dry-run", "duplicate-guard", "canary"] as const;
+export const stages = [
+  "diagnose",
+  "dry-run",
+  "duplicate-guard",
+  "canary",
+] as const;
 
 export type Stage = (typeof stages)[number];
 export type StageStatus = "locked" | "ready" | "verified" | "blocked";
@@ -20,12 +25,22 @@ export function stageStatus(stage: Stage, state: RunState): StageStatus {
     state.expectedChain === state.observedChain;
 
   if (stage === "diagnose") return diagnosisReady ? "verified" : "blocked";
-  if (stage === "dry-run") return diagnosisReady ? (state.simulationSucceeded ? "verified" : "ready") : "locked";
+  if (stage === "dry-run")
+    return diagnosisReady
+      ? state.simulationSucceeded
+        ? "verified"
+        : "ready"
+      : "locked";
   if (stage === "duplicate-guard") {
     if (!diagnosisReady || !state.simulationSucceeded) return "locked";
     return state.durableRequestCount === 1 ? "verified" : "ready";
   }
-  if (!diagnosisReady || !state.simulationSucceeded || state.durableRequestCount !== 1) return "locked";
+  if (
+    !diagnosisReady ||
+    !state.simulationSucceeded ||
+    state.durableRequestCount !== 1
+  )
+    return "locked";
   return "ready";
 }
 

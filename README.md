@@ -8,8 +8,8 @@ The problem is practical: a first KeeperHub workflow can fail for several reason
 
 ## What it does
 
-1. Records a controlled connection diagnosis with no transaction.
-2. Records a controlled safe dry-run with no transaction.
+1. Records a controlled Base Sepolia connection diagnosis with no transaction.
+2. Records a controlled Base Sepolia safe dry-run with no transaction.
 3. Runs a duplicate-request test and proves one durable database outcome.
 4. Reads FillPilot's completed public Base Sepolia proof record without receiving any KeeperHub credential or write authority.
 
@@ -46,7 +46,7 @@ pnpm dev
 
 Start ChaosKit on its configured port, then open `http://127.0.0.1:3001` and choose **Start a controlled test**.
 
-When both apps run locally, start FillPilot on port `3000` and ChaosKit on port `3001`. Set `FILLPILOT_URL=http://127.0.0.1:3000` in ChaosKit only when FillPilot is running. ChaosKit calls only FillPilot's fixed public proof endpoint. It does not read API keys, browser sessions, or wallet credentials from FillPilot.
+When both apps run locally, start FillPilot on port `3000` and ChaosKit on port `3001`. Set `FILLPILOT_URL=http://127.0.0.1:3000` in ChaosKit only when FillPilot is running. ChaosKit calls only FillPilot's fixed public proof endpoint. It does not read API keys, browser sessions, or wallet credentials from FillPilot. The controlled lab uses Base Sepolia chain ID `84532` to match the published proof.
 
 ## Verification
 
@@ -56,4 +56,4 @@ pnpm lint
 pnpm typecheck
 ```
 
-The PostgreSQL integration tests run only when `TEST_DATABASE_URL` is configured. The repository-wide Prettier check currently has pre-existing formatting failures outside this feature. They are documented rather than mass-reformatted.
+The PostgreSQL integration tests use `TEST_DATABASE_URL`. Public lab writes are bounded by a small anonymous rate limit and remain controlled evidence only. The production app does not receive a KeeperHub API key, private key, testnet write flag, or mainnet write flag.

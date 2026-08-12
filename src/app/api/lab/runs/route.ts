@@ -4,6 +4,7 @@ import {
   createLabRun,
   listRecentLabRuns,
 } from "@/server/db/evidence-repository";
+import { allowAnonymousWrite } from "@/server/security/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -26,10 +27,20 @@ export async function GET() {
 
 /** Starts a controlled local run. This route cannot call KeeperHub or a chain. */
 export async function POST() {
+  const limit = allowAnonymousWrite("lab-run");
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "Too many lab runs. Try again later." },
+      {
+        status: 429,
+        headers: { "Retry-After": String(limit.retryAfterSeconds) },
+      },
+    );
+  }
   try {
     const run = await createLabRun({
-      target: "fillpilot-ethereum-sepolia-canary",
-      expectedChainId: 11155111,
+      target: "fillpilot-base-sepolia-canary",
+      expectedChainId: 84532,
     });
     return NextResponse.json({ run });
   } catch (error) {

@@ -1,7 +1,53 @@
-.header { align-items: center; background: var(--ink); color: white; display: flex; gap: 48px; justify-content: space-between; min-height: 82px; padding: 0 5vw; }
-.brand { font-size: 27px; font-weight: 800; letter-spacing: -1.5px; }
-.nav { display: flex; font-family: "SFMono-Regular", Consolas, monospace; font-size: 14px; gap: 34px; margin-right: auto; }
-.nav a { color: #e6e9ef; }
-.action { border: 1px solid #4c8ef7; color: white; font-family: "SFMono-Regular", Consolas, monospace; font-size: 13px; padding: 13px 17px; }
-.action:hover, .action:focus-visible { background: #183c78; }
-@media (max-width: 680px) { .header { gap: 16px; min-height: 68px; padding: 0 20px; } .nav { display: none; } .brand { font-size: 23px; } .action { font-size: 11px; padding: 10px; } }
+.header {
+  align-items: center;
+  background: var(--ink);
+  color: white;
+  display: flex;
+  gap: 48px;
+  justify-content: space-between;
+  min-height: 82px;
+  padding: 0 5vw;
+}
+.brand {
+  font-size: 27px;
+  font-weight: 800;
+  letter-spacing: -1.5px;
+}
+.nav {
+  display: flex;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 14px;
+  gap: 34px;
+  margin-right: auto;
+}
+.nav a {
+  color: #e6e9ef;
+}
+.action {
+  border: 1px solid #4c8ef7;
+  color: white;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 13px;
+  padding: 13px 17px;
+}
+.action:hover,
+.action:focus-visible {
+  background: #183c78;
+}
+@media (max-width: 680px) {
+  .header {
+    gap: 16px;
+    min-height: 68px;
+    padding: 0 20px;
+  }
+  .nav {
+    display: none;
+  }
+  .brand {
+    font-size: 23px;
+  }
+  .action {
+    font-size: 11px;
+    padding: 10px;
+  }
+}

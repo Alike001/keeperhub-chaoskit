@@ -7,7 +7,9 @@ export const metadata: Metadata = {
     "A controlled reliability lab for testing KeeperHub workflow recovery before value is exposed.",
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
       <body>{children}</body>

@@ -42,9 +42,9 @@ This is execution-rail evidence only. It is not a ChaosKit deployment, FillPilot
 
 ### 1. The selected wallet and the funded wallet can be different
 
-**Reproduction:** View a KeeperHub organization wallet on Ethereum Sepolia, then fund it with Ethereum Sepolia ETH while preparing a Base Sepolia execution.
+**Reproduction:** View the KeeperHub organization wallet on Base Sepolia, then fund it with Base Sepolia ETH before preparing the canary execution.
 
-**Observed outcome:** The wallet can show a healthy Ethereum Sepolia balance while Base Sepolia still has zero native gas.
+**Observed outcome:** Testnet balances are chain-specific. Ethereum Sepolia ETH cannot pay Base Sepolia gas, so the execution wallet must be funded on Base Sepolia.
 
 **Lesson:** Every preflight needs the tuple `wallet address + chain ID + native asset`, not a generic “wallet funded” label.
 

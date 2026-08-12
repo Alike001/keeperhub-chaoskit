@@ -8,7 +8,7 @@ import styles from "./runbook-lab.module.css";
 const initialState: RunState = {
   keeperHubConnected: false,
   walletPresent: false,
-  expectedChain: 11155111,
+  expectedChain: 84532,
   observedChain: null,
   simulationSucceeded: false,
   durableRequestCount: 0,
@@ -165,11 +165,11 @@ export function RunbookLab() {
       ...old,
       keeperHubConnected: true,
       walletPresent: true,
-      observedChain: 11155111,
+      observedChain: 84532,
     }));
     record(
       "Diagnose",
-      "Controlled diagnosis saved for Ethereum Sepolia (11155111). No KeeperHub call was made.",
+      "Controlled diagnosis saved for Base Sepolia (84532). No KeeperHub call was made.",
     );
   }
   async function simulate() {
@@ -219,7 +219,7 @@ export function RunbookLab() {
             status={diagnosed ? "verified" : "ready"}
             detail={
               diagnosed
-                ? "Controlled diagnosis saved for Ethereum Sepolia. A real KeeperHub doctor remains pending."
+                ? "Controlled diagnosis saved for Base Sepolia. A real KeeperHub doctor remains pending."
                 : "Record a controlled prerequisite check. This cannot send a transaction."
             }
             action="Record controlled diagnosis"
@@ -296,7 +296,7 @@ export function RunbookLab() {
               {recentRuns.map((run) => (
                 <li key={run.id}>
                   <span className="mono">run_{run.id.slice(0, 8)}</span>
-                  <span>Ethereum Sepolia ({run.expectedChainId})</span>
+                  <span>Base Sepolia ({run.expectedChainId})</span>
                   <button
                     type="button"
                     onClick={() => void showDurableEvidence(run.id)}
