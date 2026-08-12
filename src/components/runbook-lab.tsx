@@ -222,7 +222,7 @@ export function RunbookLab() {
                 ? "Controlled diagnosis saved for Ethereum Sepolia. A real KeeperHub doctor remains pending."
                 : "Record a controlled prerequisite check. This cannot send a transaction."
             }
-            action="Run connection doctor"
+            action="Record controlled diagnosis"
             onClick={diagnose}
           />
           <Stage
@@ -234,7 +234,7 @@ export function RunbookLab() {
                 ? "Controlled dry-run evidence saved. A real KeeperHub simulation remains pending."
                 : "Record a controlled dry-run after the prerequisite check."
             }
-            action="Simulate prepared call"
+            action="Record controlled dry-run"
             onClick={simulate}
             disabled={!diagnosed}
           />
@@ -257,10 +257,10 @@ export function RunbookLab() {
             status="locked"
             detail={
               proofVerified && canaryReady
-                ? "FillPilot's public Base Sepolia proof is complete. ChaosKit verified the record without gaining any authority to submit another call."
+                ? "FillPilot's public Base Sepolia proof record is valid. ChaosKit read the record without gaining any authority to submit another call."
                 : proofVerified
-                  ? "FillPilot's public Base Sepolia proof is complete. Finish the controlled evidence stages to compare the documented test path with a real receipt."
-                  : "FillPilot's public proof could not be verified. ChaosKit cannot request a testnet write."
+                  ? "FillPilot's public Base Sepolia proof record is valid. Finish the controlled evidence stages to compare the documented test path with a real receipt."
+                  : "FillPilot's public proof record could not be validated. ChaosKit cannot request a testnet write."
             }
             action="Proof read only, no write authority"
             disabled
